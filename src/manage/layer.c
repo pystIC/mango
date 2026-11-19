@@ -182,8 +182,8 @@ void handle_layer_surface_map(struct wl_listener *listener, void *data) {
 
 	// Applies the layer rule.
 	for (ji = 0; ji < config.layer_rules_count; ji++) {
-		if (regex_match(config.layer_rules[ji].layer_name,
-						l->layer_surface->namespace)) {
+		if (regex_match_compiled(config.layer_rules[ji].re_layer_name,
+								 l->layer_surface->namespace)) {
 
 			r = &config.layer_rules[ji];
 			APPLY_INT_PROP(l, r, shield_when_capture);

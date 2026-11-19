@@ -13,7 +13,7 @@
 enum { NONE, OPEN, MOVE, CLOSE, TAG, FOCUS, OPAFADEIN, OPAFADEOUT, OVERVIEW };
 
 struct dvec2 {
-	double x, y;
+	float x, y;
 };
 
 struct ivec2 {

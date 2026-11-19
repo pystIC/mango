@@ -1039,10 +1039,11 @@ client_center_geometry(Client *c, Monitor *tm, struct wlr_box geom,
 /* Helper: Check if rule matches client */
 bool is_window_rule_matches(const ConfigWinRule *r, const char *appid,
 							const char *title) {
-	return (r->title && regex_match(r->title, title) && !r->id) ||
-		   (r->id && regex_match(r->id, appid) && !r->title) ||
-		   (r->id && regex_match(r->id, appid) && r->title &&
-			regex_match(r->title, title));
+	if (r->title && (!r->re_title || !title || !regex_match_compiled(r->re_title, title)))
+		return false;
+	if (r->id && (!r->re_id || !appid || !regex_match_compiled(r->re_id, appid)))
+		return false;
+	return (r->title != NULL || r->id != NULL);
 }
 
 Client *center_tiled_select(Monitor *m) {

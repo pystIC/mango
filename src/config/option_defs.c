@@ -1356,6 +1356,9 @@ bool parse_option(Config *config, char *key, char *value, int line_number) {
 		if (rule->layer_name == NULL) {
 			rule->layer_name = strdup("default");
 		}
+		if (rule->layer_name) {
+			rule->re_layer_name = regex_compile(rule->layer_name);
+		}
 
 		config->layer_rules_count++;
 		return !parse_error;
@@ -1576,6 +1579,10 @@ bool parse_option(Config *config, char *key, char *value, int line_number) {
 			}
 			token = strtok(NULL, ",");
 		}
+		if (rule->id)
+			rule->re_id = regex_compile(rule->id);
+		if (rule->title)
+			rule->re_title = regex_compile(rule->title);
 		config->window_rules_count++;
 		return !parse_error;
 	} else if (strcmp(key, "device_rule") == 0) {

@@ -65,6 +65,14 @@ void free_config(void) {
 				free((void *)rule->id);
 			if (rule->title)
 				free((void *)rule->title);
+			if (rule->re_id) {
+				pcre2_code_free(rule->re_id);
+				rule->re_id = NULL;
+			}
+			if (rule->re_title) {
+				pcre2_code_free(rule->re_title);
+				rule->re_title = NULL;
+			}
 			if (rule->monitor)
 				free((void *)rule->monitor);
 			rule->id = NULL;
@@ -241,6 +249,10 @@ void free_config(void) {
 		for (int32_t i = 0; i < config.layer_rules_count; i++) {
 			if (config.layer_rules[i].layer_name)
 				free((void *)config.layer_rules[i].layer_name);
+			if (config.layer_rules[i].re_layer_name) {
+				pcre2_code_free(config.layer_rules[i].re_layer_name);
+				config.layer_rules[i].re_layer_name = NULL;
+			}
 			config.layer_rules[i].animation_type_open = ANIM_TYPE_UNSET;
 			config.layer_rules[i].animation_type_close = ANIM_TYPE_UNSET;
 		}

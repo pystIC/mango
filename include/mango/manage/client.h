@@ -119,20 +119,73 @@ struct Client {
 #endif
 	uint32_t bw;
 	uint32_t tags, oldtags;
-	bool dirty;
 	int32_t xdg_geo_x, xdg_geo_y;
 	uint32_t configure_serial;
 	struct wlr_foreign_toplevel_handle_v1 *foreign_toplevel;
-	int32_t isfloating, isurgent, isfullscreen, isfakefullscreen,
-		need_float_size_reduce, isminimized, isoverlay, no_size_hint,
-		ignore_maximize, ignore_minimize, idleinhibit_when_focus,
-		vrr_only_fullscreen, force_render, activation_bypass;
-	int32_t ismaximizescreen;
 	int32_t overview_backup_bw;
 	int32_t fullscreen_backup_x, fullscreen_backup_y, fullscreen_backup_w,
 		fullscreen_backup_h;
-	int32_t overview_isfullscreenbak, overview_ismaximizescreenbak,
-		overview_isfloatingbak;
+
+	/* Packed boolean flags: shrunk from int32_t and clustered for cache locality */
+	bool dirty;
+	bool isfloating;
+	bool isurgent;
+	bool isfullscreen;
+	bool isfakefullscreen;
+	bool need_float_size_reduce;
+	bool isminimized;
+	bool isoverlay;
+	bool no_size_hint;
+	bool ignore_maximize;
+	bool ignore_minimize;
+	bool idleinhibit_when_focus;
+	bool vrr_only_fullscreen;
+	bool force_render;
+	bool activation_bypass;
+	bool ismaximizescreen;
+	bool overview_isfullscreenbak;
+	bool overview_ismaximizescreenbak;
+	bool overview_isfloatingbak;
+	bool is_in_scratchpad;
+	bool isfloating_before_scratchpad;
+	bool iscustomsize;
+	bool iscustompos;
+	bool iscustom_scroller_proportion;
+	bool iscustom_scroller_proportion_single;
+	bool isglobal;
+	bool no_border;
+	bool no_animation;
+	bool isopensilent;
+	bool istagsilent;
+	bool iskilling;
+	bool isnamedscratchpad;
+	bool shield_when_capture;
+	bool is_pending_open_animation;
+	bool is_restoring_from_ov;
+	bool need_output_flush;
+	bool isterm;
+	bool no_swallow;
+	bool allow_csd;
+	bool force_fakemaximize;
+	bool force_tiled_state;
+	bool is_clip_to_hide;
+	bool drag_to_tile;
+	bool scratchpad_switching_mon;
+	bool scratchpad_tagin;
+	bool fake_no_border;
+	bool no_focus;
+	bool no_fade_in;
+	bool no_fade_out;
+	bool no_force_center;
+	bool isunglobal;
+	bool ismaster;
+	bool old_ismaster;
+	bool cursor_in_upper_half;
+	bool cursor_in_left_half;
+	bool isleftstack;
+	bool confine_pointer;
+	bool isfocusing;
+	bool enable_drop_area_draw;
 
 	struct wlr_scene_tree *ov_card_tree; /* Overview card tree (root surface
 											plus all subsurface nodes). */
@@ -150,44 +203,13 @@ struct Client {
 
 	int32_t animation_type_open;
 	int32_t animation_type_close;
-	int32_t is_in_scratchpad;
-	int32_t isfloating_before_scratchpad;
-	int32_t iscustomsize;
-	int32_t iscustompos;
-	int32_t iscustom_scroller_proportion;
-	int32_t iscustom_scroller_proportion_single;
-	int32_t isglobal;
-	int32_t no_border;
-	int32_t no_animation;
-	int32_t isopensilent;
-	int32_t istagsilent;
-	int32_t iskilling;
-	int32_t isnamedscratchpad;
-	int32_t shield_when_capture;
-	bool is_pending_open_animation;
-	bool is_restoring_from_ov;
 	float scroller_proportion;
 	float scroller_stack_proportion;
 	float scroller_old_stack_proportion;
-	bool need_output_flush;
 	struct mango_animation animation;
 	struct mango_opacity_animation opacity_animation;
-	int32_t isterm, no_swallow;
-	int32_t allow_csd;
-	int32_t force_fakemaximize;
-	int32_t force_tiled_state;
 	pid_t pid;
 	Client *swallowdby, *swallowing;
-	bool is_clip_to_hide;
-	bool drag_to_tile;
-	bool scratchpad_switching_mon;
-	bool scratchpad_tagin;
-	bool fake_no_border;
-	int32_t no_focus;
-	int32_t no_fade_in;
-	int32_t no_fade_out;
-	int32_t no_force_center;
-	int32_t isunglobal;
 	float focused_opacity;
 	float unfocused_opacity;
 	char oldmonname[128];
@@ -196,19 +218,12 @@ struct Client {
 	double master_size_weight, stack_size_weight;
 	double old_master_mfact_per, old_master_inner_per, old_stack_inner_per;
 	double old_scroller_pproportion;
-	bool ismaster;
-	bool old_ismaster;
-	bool cursor_in_upper_half, cursor_in_left_half;
-	bool isleftstack;
 	int32_t tearing_hint;
 	int32_t force_tearing;
-	int32_t confine_pointer;
 	int32_t allow_shortcuts_inhibit;
 	float scroller_proportion_single;
-	bool isfocusing;
 	char jump_char;
 	MultiKeycode jump_keycodes;
-	bool enable_drop_area_draw;
 	int32_t drop_direction;
 	struct wlr_box drag_tile_float_backup_geom;
 	float grid_col_per;

@@ -1621,6 +1621,15 @@ void client_set_unfocused_opacity_animation(Client *c) {
 }
 
 bool client_set_focus_opacity(Client *c) {
+	if (!c->opacity_animation.running &&
+		!(c->animation.running && c->animation.action == OPEN)) {
+		float target = c->isfullscreen ? 1.0f :
+			((server.selected_monitor && c == server.selected_monitor->sel)
+				 ? c->focused_opacity
+				 : c->unfocused_opacity);
+		if (c->opacity_animation.current_opacity == target)
+			return false;
+	}
 	float *border_color = get_border_color(c);
 	if (c->isfullscreen) {
 		c->opacity_animation.running = false;

@@ -44,20 +44,40 @@ void handle_snapshot_meta_destroy(struct wl_listener *listener, void *data) {
 	free(meta);
 }
 void init_baked_points(void) {
-	server.baked_points_move =
-		calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_move));
-	server.baked_points_open =
-		calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_open));
-	server.baked_points_tag =
-		calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_tag));
-	server.baked_points_close =
-		calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_close));
-	server.baked_points_focus =
-		calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_focus));
-	server.baked_points_opafadein =
-		calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_opafadein));
-	server.baked_points_opafadeout =
-		calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_opafadeout));
+	if (!config.animations && !config.layer_animations) {
+		free(server.baked_points_move);
+		server.baked_points_move = NULL;
+		free(server.baked_points_open);
+		server.baked_points_open = NULL;
+		free(server.baked_points_tag);
+		server.baked_points_tag = NULL;
+		free(server.baked_points_close);
+		server.baked_points_close = NULL;
+		free(server.baked_points_focus);
+		server.baked_points_focus = NULL;
+		free(server.baked_points_opafadein);
+		server.baked_points_opafadein = NULL;
+		free(server.baked_points_opafadeout);
+		server.baked_points_opafadeout = NULL;
+		return;
+	}
+
+	if (!server.baked_points_move) {
+		server.baked_points_move =
+			calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_move));
+		server.baked_points_open =
+			calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_open));
+		server.baked_points_tag =
+			calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_tag));
+		server.baked_points_close =
+			calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_close));
+		server.baked_points_focus =
+			calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_focus));
+		server.baked_points_opafadein =
+			calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_opafadein));
+		server.baked_points_opafadeout =
+			calloc(BAKED_POINTS_COUNT, sizeof(*server.baked_points_opafadeout));
+	}
 
 	for (int32_t i = 0; i < BAKED_POINTS_COUNT; i++) {
 		server.baked_points_move[i] = calculate_animation_curve_at(
@@ -111,6 +131,9 @@ double find_animation_curve_at(double t, int32_t type) {
 	} else {
 		baked_points = server.baked_points_move;
 	}
+
+	if (!baked_points)
+		return t;
 
 	while (up - down != 1) {
 		if (baked_points[middle].x <= t) {

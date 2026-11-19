@@ -7,6 +7,11 @@
 #include <wayland-server-core.h>
 #include <wayland-util.h>
 
+#ifndef PCRE2_CODE_UNIT_WIDTH
+#define PCRE2_CODE_UNIT_WIDTH 8
+#endif
+#include <pcre2.h>
+
 /* Generic helpers shared by every module. */
 #define MANGO_MAX(A, B) ((A) > (B) ? (A) : (B))
 #define MANGO_MIN(A, B) ((A) < (B) ? (A) : (B))
@@ -31,6 +36,8 @@ struct wayland_string {
 void die(const char *fmt, ...);
 void *ecalloc(size_t nmemb, size_t size);
 int32_t fd_set_nonblock(int32_t fd);
+pcre2_code *regex_compile(const char *pattern);
+int32_t regex_match_compiled(const pcre2_code *re, const char *str);
 int32_t regex_match(const char *pattern_mb, const char *str_mb);
 void wl_list_append(struct wl_list *list, struct wl_list *object);
 uint32_t get_now_in_ms(void);

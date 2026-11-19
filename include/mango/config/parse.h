@@ -2,6 +2,7 @@
 #define __CONFIG_PARSE_H__ 1
 
 #include "mango/common/types.h"
+#include "mango/common/util.h"
 #include "mango/dispatch/bind.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -107,6 +108,8 @@ typedef struct {
 typedef struct {
 	const char *id;
 	const char *title;
+	pcre2_code *re_id;
+	pcre2_code *re_title;
 	int32_t is_once;
 	int32_t is_once_applied;
 	uint32_t tags;
@@ -208,6 +211,7 @@ typedef struct {
 
 typedef struct {
 	char *layer_name; // Layout name
+	pcre2_code *re_layer_name;
 	int32_t animation_type_open;
 	int32_t animation_type_close;
 	int32_t shield_when_capture;
