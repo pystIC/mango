@@ -397,14 +397,33 @@ bool mango_scene_output_commit(struct wlr_scene_output *scene_output,
 	if (!state_changed && !wlr_scene_output_needs_frame(scene_output))
 		return true;
 
-	// build the state, attaching the scene's Buffer to it
-	bool has_img_desc =
-		(state->committed & WLR_OUTPUT_STATE_IMAGE_DESCRIPTION) ||
-		scene_output->output->image_description != NULL;
 	struct wlr_scene_output_state_options opts = {0};
-	if (m->icc_transform && !has_img_desc)
-		opts.color_transform = m->icc_transform;
-	if (!wlr_scene_output_build_state(scene_output, state, &opts))
+	bool built;
+
+	if (m->hdr_transform) {
+		const struct wlr_output_image_description *saved_desc =
+			scene_output->output->image_description;
+		uint32_t saved_committed_desc =
+			state->committed & WLR_OUTPUT_STATE_IMAGE_DESCRIPTION;
+
+		scene_output->output->image_description = NULL;
+		state->committed &= ~WLR_OUTPUT_STATE_IMAGE_DESCRIPTION;
+		opts.color_transform = m->hdr_transform;
+
+		built = wlr_scene_output_build_state(scene_output, state, &opts);
+
+		scene_output->output->image_description = saved_desc;
+		state->committed |= saved_committed_desc;
+	} else {
+		if (m->icc_transform &&
+			!(state->committed & WLR_OUTPUT_STATE_IMAGE_DESCRIPTION) &&
+			!scene_output->output->image_description) {
+			opts.color_transform = m->icc_transform;
+		}
+		built = wlr_scene_output_build_state(scene_output, state, &opts);
+	}
+
+	if (!built)
 		return false;
 
 	if (frame_allow_tearing) {
@@ -596,6 +615,7 @@ bool apply_rule_to_state(Monitor *m, const ConfigMonitorRule *rule,
 	m->hdr_min_lum = rule->hdr_min_lum;
 	m->hdr_max_lum = rule->hdr_max_lum;
 	m->hdr_max_avg_lum = rule->hdr_max_avg_lum;
+	m->hdr_sdr_lum = rule->hdr_sdr_lum;
 	m->hdr_force = rule->hdr_force >= 0 ? rule->hdr_force : 0;
 	monitor_set_icc(m, rule->icc);
 
@@ -675,6 +695,8 @@ void handle_new_output(struct wl_listener *listener, void *data) {
 	m->hdr_min_lum = 0.0f;
 	m->hdr_max_lum = 0.0f;
 	m->hdr_max_avg_lum = 0.0f;
+	m->hdr_sdr_lum = 0.0f;
+	m->active_hdr_sdr_lum = 0.0f;
 	m->hdr_force = false;
 
 	m->wlr_output = wlr_output;
@@ -789,17 +811,33 @@ void handle_new_output(struct wl_listener *listener, void *data) {
 
 	// Builds the final commit state through the scene (initializes the
 	// swapchain).
-	bool has_img_desc =
-		(state.committed & WLR_OUTPUT_STATE_IMAGE_DESCRIPTION) ||
-		wlr_output->image_description != NULL;
 	struct wlr_scene_output_state_options opts = {
 		.swapchain = NULL, // Lets the scene create it automatically.
 		.color_transform = NULL,
 	};
-	if (m->icc_transform && !has_img_desc)
-		opts.color_transform = m->icc_transform;
 
-	wlr_scene_output_build_state(m->scene_output, &state, &opts);
+	if (m->hdr_transform) {
+		const struct wlr_output_image_description *saved_desc =
+			wlr_output->image_description;
+		uint32_t saved_committed_desc =
+			state.committed & WLR_OUTPUT_STATE_IMAGE_DESCRIPTION;
+
+		wlr_output->image_description = NULL;
+		state.committed &= ~WLR_OUTPUT_STATE_IMAGE_DESCRIPTION;
+		opts.color_transform = m->hdr_transform;
+
+		wlr_scene_output_build_state(m->scene_output, &state, &opts);
+
+		wlr_output->image_description = saved_desc;
+		state.committed |= saved_committed_desc;
+	} else {
+		if (m->icc_transform &&
+			!(state.committed & WLR_OUTPUT_STATE_IMAGE_DESCRIPTION) &&
+			!wlr_output->image_description) {
+			opts.color_transform = m->icc_transform;
+		}
+		wlr_scene_output_build_state(m->scene_output, &state, &opts);
+	}
 
 	wlr_output_commit_state(wlr_output, &state);
 
@@ -943,6 +981,8 @@ void handle_output_destroy(struct wl_listener *listener, void *data) {
 
 	wlr_color_transform_unref(m->icc_transform);
 	m->icc_transform = NULL;
+	wlr_color_transform_unref(m->hdr_transform);
+	m->hdr_transform = NULL;
 	wlr_output_state_finish(&m->pending);
 	free(m->pertag);
 	free(m);

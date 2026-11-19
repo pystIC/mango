@@ -5,6 +5,7 @@ static uint32_t output_formats_10bit[8];
 #include "mango/common/log.h"
 #include "mango/common/server.h"
 #include "mango/manage/monitor.h"
+#include <wlr/render/color.h>
 
 bool output_set_render_format(Monitor *m, uint32_t candidates[], size_t count,
 							  struct wlr_output_state *state) {
@@ -56,6 +57,41 @@ bool output_supports_hdr(const Monitor *m, const char **reason) {
 		*reason = r;
 	return !r;
 }
+static const float SRGB_TO_BT2020[9] = {
+	0.6274039f, 0.3292830f, 0.0433131f,
+	0.0690973f, 0.9195404f, 0.0113623f,
+	0.0163914f, 0.0880133f, 0.8955953f
+};
+
+struct wlr_color_transform *monitor_create_hdr_transform(float sdr_lum) {
+	float scale = (sdr_lum > 0.0f ? sdr_lum : 250.0f) * 0.0001f;
+	float matrix[9];
+	for (int i = 0; i < 9; ++i) {
+		matrix[i] = SRGB_TO_BT2020[i] * scale;
+	}
+
+	struct wlr_color_transform *color_matrix =
+		wlr_color_transform_init_matrix(matrix);
+	if (!color_matrix)
+		return NULL;
+
+	struct wlr_color_transform *inv_eotf =
+		wlr_color_transform_init_linear_to_inverse_eotf(
+			WLR_COLOR_TRANSFER_FUNCTION_ST2084_PQ);
+	if (!inv_eotf) {
+		wlr_color_transform_unref(color_matrix);
+		return NULL;
+	}
+
+	struct wlr_color_transform *transforms[] = { color_matrix, inv_eotf };
+	struct wlr_color_transform *hdr_transform =
+		wlr_color_transform_init_pipeline(transforms, 2);
+	wlr_color_transform_unref(color_matrix);
+	wlr_color_transform_unref(inv_eotf);
+
+	return hdr_transform;
+}
+
 void output_enable_hdr(Monitor *m, struct wlr_output_state *os, bool enabled,
 					   bool silent) {
 	if (!m->is_hdr_enabling && !enabled)
@@ -63,6 +99,11 @@ void output_enable_hdr(Monitor *m, struct wlr_output_state *os, bool enabled,
 
 	if (!output_supports_hdr(m, NULL)) {
 		m->is_hdr_enabling = false;
+		if (m->hdr_transform) {
+			wlr_color_transform_unref(m->hdr_transform);
+			m->hdr_transform = NULL;
+		}
+		m->active_hdr_sdr_lum = 0.0f;
 		return;
 	}
 
@@ -75,6 +116,11 @@ void output_enable_hdr(Monitor *m, struct wlr_output_state *os, bool enabled,
 			wlr_output_state_set_image_description(os, NULL);
 		}
 		m->is_hdr_enabling = false;
+		if (m->hdr_transform) {
+			wlr_color_transform_unref(m->hdr_transform);
+			m->hdr_transform = NULL;
+		}
+		m->active_hdr_sdr_lum = 0.0f;
 		return;
 	}
 
@@ -100,6 +146,21 @@ void output_enable_hdr(Monitor *m, struct wlr_output_state *os, bool enabled,
 
 	m->is_hdr_enabling = true;
 	wlr_output_state_set_image_description(os, &desc);
+
+	float target_sdr_lum = m->hdr_sdr_lum > 0.0f ? m->hdr_sdr_lum :
+		(config.hdr_sdr_lum > 0.0f ? config.hdr_sdr_lum : 250.0f);
+
+	if (!m->hdr_transform || m->active_hdr_sdr_lum != target_sdr_lum) {
+		if (m->hdr_transform)
+			wlr_color_transform_unref(m->hdr_transform);
+		m->hdr_transform = monitor_create_hdr_transform(target_sdr_lum);
+		m->active_hdr_sdr_lum = m->hdr_transform ? target_sdr_lum : 0.0f;
+		if (!silent && m->hdr_transform) {
+			mango_error(true, WLR_DEBUG,
+						"HDR SDR reference white level set to %.1f nits on output %s",
+						target_sdr_lum, m->wlr_output->name);
+		}
+	}
 }
 void output_state_setup_hdr(Monitor *m, bool silent,
 							struct wlr_output_state *state) {

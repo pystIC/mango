@@ -207,6 +207,8 @@ bool parse_option(Config *config, char *key, char *value, int line_number) {
 		config->allow_tearing = atoi(value);
 	} else if (strcmp(key, "hdr_depth") == 0) {
 		config->hdr_depth = atoi(value);
+	} else if (strcmp(key, "hdr_sdr_lum") == 0) {
+		config->hdr_sdr_lum = CLAMP_FLOAT(strtof(value, NULL), 0.0f, 10000.0f);
 	} else if (strcmp(key, "allow_shortcuts_inhibit") == 0) {
 		config->allow_shortcuts_inhibit = atoi(value);
 	} else if (strcmp(key, "disable_middle_paste") == 0) {
@@ -1085,6 +1087,7 @@ bool parse_option(Config *config, char *key, char *value, int line_number) {
 		rule->hdr_min_lum = 0.0f;
 		rule->hdr_max_lum = 0.0f;
 		rule->hdr_max_avg_lum = 0.0f;
+		rule->hdr_sdr_lum = 0.0f;
 		rule->hdr_force = 0;
 		rule->icc = NULL;
 		rule->custom = 0;
@@ -1138,6 +1141,9 @@ bool parse_option(Config *config, char *key, char *value, int line_number) {
 				} else if (strcmp(key, "hdr_max_avg_lum") == 0) {
 					rule->hdr_max_avg_lum =
 						CLAMP_FLOAT(atof(val), 0.0f, 10000.0f);
+				} else if (strcmp(key, "hdr_sdr_lum") == 0) {
+					rule->hdr_sdr_lum =
+						CLAMP_FLOAT(strtof(val, NULL), 0.0f, 10000.0f);
 				} else if (strcmp(key, "hdr_force") == 0) {
 					rule->hdr_force = CLAMP_INT(atoi(val), 0, 1);
 				} else if (strcmp(key, "icc") == 0) {
@@ -2404,6 +2410,7 @@ void set_value_default() {
 	config.tag_carousel = 0;
 	config.allow_tearing = TEARING_DISABLED;
 	config.hdr_depth = MANGO_RENDER_BIT_DEPTH_10;
+	config.hdr_sdr_lum = 0.0f;
 	config.allow_shortcuts_inhibit = SHORTCUTS_INHIBIT_ENABLE;
 	config.disable_middle_paste = 0;
 	config.allow_lock_transparent = 0;
@@ -2722,6 +2729,7 @@ void override_config(void) {
 	config.drag_tile_small = CLAMP_INT(config.drag_tile_small, 0, 1);
 	config.allow_tearing = CLAMP_INT(config.allow_tearing, 0, 2);
 	config.hdr_depth = CLAMP_INT(config.hdr_depth, 0, 2);
+	config.hdr_sdr_lum = CLAMP_FLOAT(config.hdr_sdr_lum, 0.0f, 10000.0f);
 	config.allow_shortcuts_inhibit =
 		CLAMP_INT(config.allow_shortcuts_inhibit, 0, 1);
 	config.disable_middle_paste = CLAMP_INT(config.disable_middle_paste, 0, 1);

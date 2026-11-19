@@ -18,6 +18,7 @@ bool output_format_in_candidates(uint32_t format, uint32_t candidates[],
 								 size_t count);
 enum render_bit_depth bit_depth_from_format(uint32_t render_format);
 bool output_supports_hdr(const Monitor *m, const char **reason);
+struct wlr_color_transform *monitor_create_hdr_transform(float sdr_lum);
 void output_enable_hdr(Monitor *m, struct wlr_output_state *os, bool enabled,
 					   bool silent);
 void output_state_setup_hdr(Monitor *m, bool silent,

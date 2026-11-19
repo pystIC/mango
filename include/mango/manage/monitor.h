@@ -87,14 +87,20 @@ struct Monitor {
 	bool hdr_enable;
 	bool prefer_disable;
 	bool is_hdr_enabling;
+	// Bypass the EDID-derived capability checks (DisplayID-only panels).
+	bool hdr_force;
 	// Mastering display metadata, in cd/m². 0 = unset, see output_enable_hdr().
 	float hdr_min_lum;
 	float hdr_max_lum;
 	float hdr_max_avg_lum;
-	// Bypass the EDID-derived capability checks (DisplayID-only panels).
-	bool hdr_force;
+	// SDR reference white luminance in HDR mode (in cd/m²). 0 = default (250).
+	float hdr_sdr_lum;
+	// Currently cached HDR SDR white luminance to prevent redundant rebuilds.
+	float active_hdr_sdr_lum;
 	struct wlr_color_transform
 		*icc_transform; /* ICC transform loaded from the ICC file. */
+	struct wlr_color_transform
+		*hdr_transform; /* HDR SDR white scaling color transform. */
 	char icc_path[PATH_MAX];
 };
 

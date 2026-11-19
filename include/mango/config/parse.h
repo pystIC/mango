@@ -181,6 +181,7 @@ typedef struct {
 	float hdr_min_lum;			 // mastering min luminance, cd/m² (0 = unset)
 	float hdr_max_lum;			 // mastering max luminance / max_cll, cd/m²
 	float hdr_max_avg_lum;		 // max frame-average light level, cd/m²
+	float hdr_sdr_lum;			 // SDR reference white luminance in HDR, cd/m²
 	int32_t hdr_force;			 // ignore EDID-derived HDR capability checks
 	char *icc;					 // ICC profile path
 	int32_t disable;			 // prefer disable
@@ -571,6 +572,7 @@ typedef struct {
 	DecorateDrawData title_message_bardata;
 
 	int32_t hdr_depth;
+	float hdr_sdr_lum;
 } Config;
 
 /* Global config instance. */
